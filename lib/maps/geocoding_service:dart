@@ -1,0 +1,65 @@
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
+// import 'package:latlong2/latlong.dart';
+
+// class GeocodingService {
+//   final String apiKey;
+
+//   GeocodingService({required this.apiKey});
+
+//   Future<LatLng?> getCoordinates(String query) async {
+//     final url = Uri.https(
+//       'api.opencagedata.com',
+//       '/geocode/v1/json',
+//       {'q': query, 'key': apiKey},
+//     );
+
+//     final response = await http.get(url);
+
+//     if (response.statusCode == 200) {
+//       final data = json.decode(response.body);
+//       if (data['results'].isNotEmpty) {
+//         final coordinates = data['results'][0]['geometry'];
+//         return LatLng(coordinates['lat'], coordinates['lng']);
+//       }
+//     }
+
+//     return null;
+//   }
+// }
+import 'package:dio/dio.dart';
+import 'package:latlong2/latlong.dart';
+
+class GeocodingS {
+  final String apiKey;
+  final Dio _dio = Dio();
+
+  GeocodingS({required this.apiKey});
+
+  Future<LatLng?> getCoordinates(String place) async {
+    final url =
+        'https://api.mapbox.com/geocoding/v5/mapbox.places/$place.json?access_token=$apiKey';
+    final response = await _dio.get(url);
+    if (response.statusCode == 200) {
+      final data = response.data;
+      if (data['features'].isNotEmpty) {
+        final coordinates = data['features'][0]['geometry']['coordinates'];
+        return LatLng(coordinates[1], coordinates[0]);
+      }
+    }
+    return null;
+  }
+
+  Future<List<String>> getSuggestions(String query) async {
+    final url =
+        'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=$apiKey';
+    final response = await _dio.get(url);
+    if (response.statusCode == 200) {
+      final data = response.data;
+      return (data['features'] as List)
+          .map((feature) => feature['place_name'] as String)
+          .toList();
+    }
+    return [];
+  }
+}
